@@ -7,6 +7,7 @@
 
 	const fs = require('fs');
 	const url = require('url');
+	const phonebook = 'phonebook.txt';
 
 	
 	var port = 8081;
@@ -28,25 +29,69 @@
 	const WebSocketServer = require('websocket').server;
 	const server = http.createServer((req,res) => {
 		
-		console.log('Server Created');
+		console.log('Server Created')
+		deleteEntry("Louis");
 
 		res.writeHead(200, { 'Content-Type': 'text/plain' });
 		res.write('YEEYEE');
+		
 	
 	});
 	server.listen(port);
 	//server.on('close',function(){})
 
 
-	function addEntry(entry){
-
+	function addEntry(name,number){
+		writeFile(name+','+number);
 	}
 
-	function deleteEntry(entry){
-
+	function deleteEntry(name){
+		readFile((res)=>{
+			var writelist = [];
+			var list = res.split('\n'); 
+			for(var i=0; i<list.length; i++){
+				if(list[i]!="" && list[i].split(",")[0]!=name){
+					writelist.push(list[i]);
+				}	
+			}
+			clear("");
+			for(var i=0; i<writelist.length; i++){
+				addEntry(writelist[i].split(",")[0],writelist[i].split(",")[1]);	
+			}
+		})
 	}
 
 	function search(entry){
+	}
+
+		
+	function readFile(onReceive,onError = function(e){console.error(e);}){
+		//onRecieve is a function which handles your data in the file
+		fs.readFile(phonebook, 'utf8' , (err, data) => {
+		  if (err) {
+		    onError(err);
+		    return
+		  }
+		  onReceive(data);
+		})
+	}
+
+	function writeFile(content,onError = (e)=>{console.error(e);}){
+		fs.writeFile(phonebook, content+'\n', { flag: 'a+' }, err => {
+		  if (err) {
+		    onError(err);
+		    return
+		  }
+		})
+	}
+
+	function clear(onError = (e)=>{console.error(e);}){
+		fs.writeFile(phonebook, "", err => {
+		  if (err) {
+		    onError(err);
+		    return
+		  }
+		})
 	}
 
 
