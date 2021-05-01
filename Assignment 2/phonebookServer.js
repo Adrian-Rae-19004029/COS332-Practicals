@@ -30,7 +30,7 @@
 	const server = http.createServer((req,res) => {
 		
 		console.log('Server Created')
-		deleteEntry("Louis");
+		search("Claudio");
 
 		res.writeHead(200, { 'Content-Type': 'text/plain' });
 		res.write('YEEYEE');
@@ -42,7 +42,7 @@
 
 
 	function addEntry(name,number){
-		writeFile(name+','+number);
+		writeFile(name.toUpperCase()+','+number);
 	}
 
 	function deleteEntry(name){
@@ -61,18 +61,41 @@
 		})
 	}
 
+	
 	function search(entry){
-		fs.readFile(phonebook, 'utf8' , (err, data) => {
-			if (err) {
-				onError(err);
-				return
-			}
-			if(data.includes(entry)){//if(data.indexOf(entry) >= 0){
-				console.log(data)
-			}
+        fs.readFile(phonebook, 'utf8' , (err, data) => {
+            if (err) {
+                onError(err);
+                return
+            }
+            if(data.includes(entry)){//if(data.indexOf(entry) >= 0){
+                console.log(data)
+            }
 
-		})
-	}
+        })
+    }
+
+    /*
+    function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");}){
+        fs.readFile(phonebook, 'utf8' , (err, data) => {
+            if (err) {
+                onError(err);
+                return
+            }
+            if(data.includes(entry.toUpperCase())){//if(data.indexOf(entry) >= 0){
+                var array = data.split('\n');
+                for(var i=0; i<array.length; i++){
+					if(array[i]!="" && array[i].split(",")[0]==entry){
+						var number = array[i].split(",")[1];
+						onFound(number);
+						return;
+					}	
+				}
+            }
+            onNotFound();
+
+        })
+    }*/
 
 		
 	function readFile(onReceive,onError = function(e){console.error(e);}){
