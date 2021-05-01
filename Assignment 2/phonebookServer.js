@@ -8,7 +8,6 @@
 	const fs = require('fs');
 	const url = require('url');
 	const phonebook = 'phonebook.txt';
-
 	
 	var port = 8081;
 
@@ -29,17 +28,58 @@
 	const WebSocketServer = require('websocket').server;
 	const server = http.createServer((req,res) => {
 		
-		console.log('Server Created')
-		search("Claudio");
+		console.log('Server Created');
 
-		res.writeHead(200, { 'Content-Type': 'text/plain' });
-		res.write('YEEYEE');
+		//res.writeHead(200, { 'Content-Type': 'text/plain' });
+		
+
+		
+		let path = url.parse(req.url).pathname;
+		if(path==='/add'){
+			res.write('YEEYEE');		
+		}
+		else if(path==='/search'){
+			
+		}
+		else if(path==='/delete'){
+			
+		}
 		
 	
 	});
 	server.listen(port);
 	//server.on('close',function(){})
 
+	/*
+	var Telnet = require('telnet-client')
+	var connection = new Telnet()
+
+	var params = {
+	  host: '127.0.0.1',
+	  port: 23,
+	  shellPrompt: '/ # ',
+	  timeout: 1500,
+	  // removeEcho: 4
+	}
+
+	connection.on('ready', function(prompt) {
+	  connection.exec(cmd, function(err, response) {
+	    console.log(response)
+	  })
+	})
+
+	connection.on('timeout', function() {
+	  console.log('socket timeout!')
+	  connection.end()
+	})
+
+	connection.on('close', function() {
+	  console.log('connection closed')
+	})
+
+	connection.connect(params);
+	console.log("it worked!")
+	*/
 
 	function addEntry(name,number){
 		writeFile(name.toUpperCase()+','+number);
@@ -61,22 +101,8 @@
 		})
 	}
 
-	
-	function search(entry){
-        fs.readFile(phonebook, 'utf8' , (err, data) => {
-            if (err) {
-                onError(err);
-                return
-            }
-            if(data.includes(entry)){//if(data.indexOf(entry) >= 0){
-                console.log(data)
-            }
 
-        })
-    }
-    //iwehfoiwe lololololl :)
-
-    /*
+   
     function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");}){
         fs.readFile(phonebook, 'utf8' , (err, data) => {
             if (err) {
@@ -96,7 +122,7 @@
             onNotFound();
 
         })
-    }*/
+    }
 
 		
 	function readFile(onReceive,onError = function(e){console.error(e);}){
@@ -132,7 +158,7 @@
 	
 	//socket
 	
-	/*
+	
 	const wsServer = new WebSocketServer({
 		httpServer: server
 	});
@@ -146,34 +172,11 @@
 			//console.log('Received Message:', message.utf8Data);
 			
 			//if its a new socket being created
-			if(message.utf8Data ==='login socket created'){
-				numUsers++;
+			if(message.utf8Data ==='add'){
 				//console.log('Client has connected.');
-				connection.sendUTF('Welcome to Tune Room');
+				connection.sendUTF('Ok den');
 			}
-			else if(message.utf8Data ==='admin socket created'){
-				numUsers++;
-				//console.log('Client has connected.');
-				connection.sendUTF('Welcome, admin');
-			}
-			else if(message.utf8Data.includes('login')){
-
-			}
-			else if(message.utf8Data.includes('setTime')){
-			}
-			else if(message.utf8Data.includes('getTime')){
-
-			}
-			else if(message.utf8Data.includes('SVRQUIT')){
-				connection.sendUTF('SERVER:CLOSING');
-				connection.close();
-				setTimeout(process.exit("Admin requested to quit"),5000);
-			}
-			else if(message.utf8Data.includes('SVRLIST')){
-				connection.sendUTF('SERVER LOG'+'\n'
-				+"Active Users: "+numUsers
-				);
-			}
+			
 		
 		});
 		connection.on('close', function(reasonCode, description) {
@@ -184,5 +187,5 @@
 	process.on("exit",function(reason){
 		console.log(reason);
 	});
-	*/
+	
 
