@@ -62,6 +62,16 @@
 	}
 
 	function search(entry){
+		fs.readFile(phonebook, 'utf8' , (err, data) => {
+			if (err) {
+				onError(err);
+				return
+			}
+			if(data.includes(entry)){//if(data.indexOf(entry) >= 0){
+				console.log(data)
+			}
+
+		})
 	}
 
 		
