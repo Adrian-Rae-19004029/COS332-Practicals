@@ -16,7 +16,7 @@ function deleteEntry(name){
 		var writelist = [];
 		var list = res.split('\n');
 		for(var i=0; i<list.length; i++){
-			if(list[i]!="" && list[i].split(",")[0]!=name){
+			if(list[i]!=="" && list[i].split(",")[0]!==name){
 				writelist.push(list[i]);
 			}
 		}
@@ -38,7 +38,7 @@ function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] 
 			for(var i=0; i<array.length; i++){
 				if(array[i]!="" && array[i].split(",")[0]==entry){
 					var number = array[i].split(",")[1];
-					onFound(number);
+					onFound(number.trim());
 					return;
 				}
 			}
@@ -60,7 +60,7 @@ function readFile(onReceive,onError = function(e){console.error(e);}){
 }
 
 function writeFile(content,onError = (e)=>{console.error(e);}){
-	fs.writeFile(phonebook, content, { flag: 'a+' }, err => {
+	fs.writeFile(phonebook, content+"\r\n", { flag: 'a+' }, err => {
 		if (err) {
 			onError(err);
 			return
@@ -87,6 +87,25 @@ function formattedString(string, formatFunction = lib_chalk.white){
 
 function clearScreen(lines){
 	return "\r\n".repeat(lines || 40);
+}
+
+function moveToInput(socket){
+	socket.write(String.fromCharCode(27));
+	socket.write("[16;2H phonebook \>                                                                  ");
+	socket.write(String.fromCharCode(27));
+	socket.write("[16;3H")
+	socket.write(formattedString("phonebook \> ",lib_chalk.yellow));
+}
+
+function displayResponse(socket,phrase,error=false){
+	//go to the position and write out a blank line
+	socket.write(String.fromCharCode(27));
+	socket.write("[18;2H                                                                            ");
+	socket.write(String.fromCharCode(27));
+	socket.write("[18;2H");
+	if(!error) socket.write(formattedString(" + "+phrase,lib_chalk.green));
+	else socket.write(formattedString(" + "+phrase,lib_chalk.red));
+	moveToInput(socket);
 }
 
 function draw(display) {
@@ -129,7 +148,9 @@ function socketHandler(socket) {
                 "|                                                                              |".split(""),
 				"+------------------------------------------------------------------------------+".split(""),
                 "| phonebook \>                                                                  |".split(""),
-                "+------------------------------------------------------------------------------+".split("")
+                "+------------------------------------------------------------------------------+".split(""),
+				"|                                                                              |".split(""),
+				"+------------------------------------------------------------------------------+".split("")
               ];
 
     var now = new Date();
@@ -151,9 +172,8 @@ function socketHandler(socket) {
     }
 
 
-    socket.write(draw(display));
-	socket.write(String.fromCharCode(27));
-	socket.write("[16;15H");
+    socket.write(formattedString(draw(display),lib_chalk.white));
+	moveToInput(socket);
 
 	socket.on("data", function(data) {
 
@@ -164,33 +184,37 @@ function socketHandler(socket) {
 		if(char==="\r\n") {
 			//the activation char
 			var argumentArray = inputBuffer.join('').trim().split(" ");
-			//clear the buffer
-			inputBuffer = [];
-
 			if(argumentArray.length!==0){
-				if(argumentArray[0]==="add" && argumentArray.length===3 && validNumber(argumentArray[2])){
+				if(argumentArray[0]==="add" && argumentArray.length===3){
 					var name = argumentArray[1].toUpperCase();
 					var number = argumentArray[2];
 					addEntry(name,number);
+					displayResponse(socket,"Successfully added ("+name+","+number+")");
+
 				}
 				else if(argumentArray[0]==="delete" && argumentArray.length===2){
 					var name = argumentArray[1].toUpperCase();
 					search(name,(res)=>{
 						deleteEntry(name);
-						socket.write(formattedString("Deleted ["+name+","+res+"]\r\n",lib_chalk.green));
+						displayResponse(socket,"Deleted ("+name+","+res+")");
 					}, ()=>{
-						socket.write(formattedString("Could not find ["+name+"]\r\n",lib_chalk.red));
+						displayResponse(socket,"Could not find ("+name+")",true);
 					});
 				}
 				else if(argumentArray[0]==="search" && argumentArray.length===2){
 					var name = argumentArray[1].toUpperCase();
 					search(name,(res)=>{
-						socket.write(formattedString("Found ["+name+","+res+"]\r\n",lib_chalk.green));
+						displayResponse(socket,"Found result: ("+name+","+res+")");
 					}, ()=>{
-						socket.write(formattedString("Could not find ["+name+"]\r\n",lib_chalk.red));
+						displayResponse(socket,"Could not find ("+name+")",true);
 					});
 				}
+				else displayResponse(socket,"Invalid Query",true);
+
 			}
+			else displayResponse(socket,"Invalid Query",true);
+			//clear the buffer
+			inputBuffer = [];
 
 		}
 
