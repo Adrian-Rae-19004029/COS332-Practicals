@@ -1,16 +1,24 @@
+//const variables required for the phonebook to run
 const lib_net = require("net");
 const lib_chalk = require("chalk");
 const fs = require('fs');
 
+//other variables for use in the prac 3
 var clients = {};
 var sessionId = -1;
 const phonebook = 'phonebook.txt';
 const port = 8023;
 
+
+
+/******************************************************************/ //THREE MAIN FUNCTIONS BELOW
+
+//adds a name to the textfile
 function addEntry(name,number){
 	writeFile(name.toUpperCase()+','+number);
 }
 
+//deletes a name from the textfile
 function deleteEntry(name){
 	readFile((res)=>{
 		var writelist = [];
@@ -27,6 +35,7 @@ function deleteEntry(name){
 	})
 }
 
+//searches a textfile for a name
 function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");}){
 	fs.readFile(phonebook, 'utf8' , (err, data) => {
 		if (err) {
@@ -47,6 +56,7 @@ function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] 
 
 	})
 }
+/******************************************************************/ //SUB FUNCTIONS USED BY ABOVE MAIN ONES
 
 function readFile(onReceive,onError = function(e){console.error(e);}){
 	//onRecieve is a function which handles your data in the file
@@ -76,6 +86,7 @@ function clear(onError = (e)=>{console.error(e);}){
 		}
 	})
 }
+/******************************************************************/ //Verification and task handeling
 
 function validNumber(input){
 	return (input.length == 10 || input[0] == "0");
