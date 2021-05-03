@@ -114,6 +114,14 @@ function draw(display) {
 	return output;
 }
 
+function validArguments(array){
+	var valid = true;
+	array.forEach((item,index)=>{
+		if(item.trim()=="") valid = false;
+	});
+	return valid;
+}
+
 function socketHandler(socket) {
 	sessionId++;
 	clients[sessionId] = {socket: socket};
@@ -181,7 +189,7 @@ function socketHandler(socket) {
 			//the activation char
 			var argumentArray = inputBuffer.join('').trim().split(" ");
 			if(argumentArray.length!==0){
-				if(argumentArray[0]==="add" && argumentArray.length===3){
+				if(argumentArray[0]==="add" && argumentArray.length===3 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					var number = argumentArray[2];
 					if(!validNumber(number)){
@@ -194,7 +202,7 @@ function socketHandler(socket) {
 
 
 				}
-				else if(argumentArray[0]==="delete" && argumentArray.length===2){
+				else if(argumentArray[0]==="delete" && argumentArray.length===2 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					search(name,(res)=>{
 						deleteEntry(name);
@@ -203,7 +211,7 @@ function socketHandler(socket) {
 						displayResponse(socket,"Could not find ("+name+")",true);
 					});
 				}
-				else if(argumentArray[0]==="search" && argumentArray.length===2){
+				else if(argumentArray[0]==="search" && argumentArray.length===2 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					search(name,(res)=>{
 						displayResponse(socket,"Found result: ("+name+","+res+")");
