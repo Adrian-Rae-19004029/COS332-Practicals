@@ -37,14 +37,19 @@ function deleteEntry(name){
 }
 
 //searches a textfile for a name
-function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");}){
+function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");},field="name"){
+
 	readFile((res)=>{
 		var found = false;
 		var contactList = JSON.parse(res);
 		contactList.forEach((item,index)=>{
 			//console.log("Comparing "+item.name.toUpperCase()+" to "+entry.toUpperCase());
-			if(item.name.toUpperCase()===entry.toUpperCase()){
-				onFound(item.number);
+			if(field==="name" && item.name.toUpperCase()===entry.toUpperCase()){
+				onFound(item);
+				found = true;
+			}
+			else if(field==="number" && item.number===entry){
+				onFound(item);
 				found = true;
 			}
 		});
@@ -147,7 +152,7 @@ function socketHandler(socket) {
                 "| numbers in a simple text-file based manner. Operations on data can be        |".split(""),
                 "| performed by the operations:                                                 |".split(""),
                 "|    - add \<name\> \<number\>                                                     |".split(""),
-                "|    - search \<name\>                                                           |".split(""),
+                "|    - search \<entry\> \<field = name | number \>                                 |".split(""),
                 "|    - delete \<name\>                                                           |".split(""),
                 "|                                                                              |".split(""),
 				"+------------------------------------------------------------------------------+".split(""),
@@ -189,6 +194,8 @@ function socketHandler(socket) {
 			//the activation char
 			var argumentArray = inputBuffer.join('').trim().split(" ");
 			if(argumentArray.length!==0){
+
+				//adding entry
 				if(argumentArray[0]==="add" && argumentArray.length===3 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					var number = argumentArray[2];
@@ -202,23 +209,36 @@ function socketHandler(socket) {
 
 
 				}
+				//deleting entry
 				else if(argumentArray[0]==="delete" && argumentArray.length===2 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					search(name,(res)=>{
 						deleteEntry(name);
-						displayResponse(socket,"Deleted ("+name+","+res+")");
+						displayResponse(socket,"Deleted ("+res.name+","+res.number+")");
 					}, ()=>{
 						displayResponse(socket,"Could not find ("+name+")",true);
 					});
 				}
+				//search based on name
 				else if(argumentArray[0]==="search" && argumentArray.length===2 && validArguments(argumentArray)){
 					var name = argumentArray[1];
 					search(name,(res)=>{
-						displayResponse(socket,"Found result: ("+name+","+res+")");
+						displayResponse(socket,"Found result: ("+res.name+","+res.number+")");
 					}, ()=>{
 						displayResponse(socket,"Could not find ("+name+")",true);
 					});
 				}
+				//search based on specific field
+				else if(argumentArray[0]==="search" && argumentArray.length===3 && validArguments(argumentArray)){
+					var name = argumentArray[1];
+					var field = argumentArray[2];
+					search(name,(res)=>{
+						displayResponse(socket,"Found result: ("+res.name+","+res.number+")");
+					}, ()=>{
+						displayResponse(socket,"Could not find ("+name+")",true);
+					},field);
+				}
+				//argh
 				else displayResponse(socket,"Invalid Query",true);
 
 			}
