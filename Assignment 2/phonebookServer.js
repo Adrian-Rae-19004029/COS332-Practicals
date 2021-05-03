@@ -15,46 +15,41 @@ const port = 8023;
 
 //adds a name to the textfile
 function addEntry(name,number){
-	writeFile(name.toUpperCase()+','+number);
+	readFile((res)=>{
+		var contactList = JSON.parse(res);
+		var contact = {"name":name,"number":number};
+		contactList.push(contact);
+		writeFile(contactList);
+	});
+
 }
 
 //deletes a name from the textfile
 function deleteEntry(name){
 	readFile((res)=>{
 		var writelist = [];
-		var list = res.split('\n');
-		for(var i=0; i<list.length; i++){
-			if(list[i]!=="" && list[i].split(",")[0]!==name){
-				writelist.push(list[i]);
-			}
-		}
-		clear("");
-		for(var i=0; i<writelist.length; i++){
-			addEntry(writelist[i].split(",")[0],writelist[i].split(",")[1]);
-		}
+		var contactList = JSON.parse(res);
+		contactList.forEach((item,index)=>{
+			if(item.name.toUpperCase()!==name.toUpperCase()) writelist.push(item);
+		})
+		writeFile(writelist);
 	})
 }
 
 //searches a textfile for a name
 function search(entry, onFound = (res)=>{console.log("Found ["+entry+","+res+"] in phonebook");}, onNotFound = ()=>{console.error("Could not find ["+entry+"] in phonebook");}){
-	fs.readFile(phonebook, 'utf8' , (err, data) => {
-		if (err) {
-			onError(err);
-			return
-		}
-		if(data.includes(entry.toUpperCase())){//if(data.indexOf(entry) >= 0){
-			var array = data.split('\n');
-			for(var i=0; i<array.length; i++){
-				if(array[i]!="" && array[i].split(",")[0]==entry){
-					var number = array[i].split(",")[1];
-					onFound(number.trim());
-					return;
-				}
+	readFile((res)=>{
+		var found = false;
+		var contactList = JSON.parse(res);
+		contactList.forEach((item,index)=>{
+			//console.log("Comparing "+item.name.toUpperCase()+" to "+entry.toUpperCase());
+			if(item.name.toUpperCase()===entry.toUpperCase()){
+				onFound(item.number);
+				found = true;
 			}
-		}
-		onNotFound();
-
-	})
+		});
+		if(found===false) onNotFound();
+	});
 }
 /******************************************************************/ //SUB FUNCTIONS USED BY ABOVE MAIN ONES
 
@@ -70,16 +65,8 @@ function readFile(onReceive,onError = function(e){console.error(e);}){
 }
 
 function writeFile(content,onError = (e)=>{console.error(e);}){
-	fs.writeFile(phonebook, content+"\r\n", { flag: 'a+' }, err => {
-		if (err) {
-			onError(err);
-			return
-		}
-	})
-}
-
-function clear(onError = (e)=>{console.error(e);}){
-	fs.writeFile(phonebook, "", err => {
+	//content is a JSON Array
+	fs.writeFile(phonebook, JSON.stringify(content), err => {
 		if (err) {
 			onError(err);
 			return
@@ -131,9 +118,7 @@ function socketHandler(socket) {
 	sessionId++;
 	clients[sessionId] = {socket: socket};
 	var id = sessionId;
-	var mode = "title";
 	var display = [];
-
 	var inputBuffer = [];
 
 	//create a display
@@ -197,14 +182,20 @@ function socketHandler(socket) {
 			var argumentArray = inputBuffer.join('').trim().split(" ");
 			if(argumentArray.length!==0){
 				if(argumentArray[0]==="add" && argumentArray.length===3){
-					var name = argumentArray[1].toUpperCase();
+					var name = argumentArray[1];
 					var number = argumentArray[2];
-					addEntry(name,number);
-					displayResponse(socket,"Successfully added ("+name+","+number+")");
+					if(!validNumber(number)){
+						displayResponse(socket,"Invalid Phone Number format");
+					}
+					else{
+						addEntry(name,number);
+						displayResponse(socket,"Successfully added ("+name+","+number+")");
+					}
+
 
 				}
 				else if(argumentArray[0]==="delete" && argumentArray.length===2){
-					var name = argumentArray[1].toUpperCase();
+					var name = argumentArray[1];
 					search(name,(res)=>{
 						deleteEntry(name);
 						displayResponse(socket,"Deleted ("+name+","+res+")");
@@ -213,7 +204,7 @@ function socketHandler(socket) {
 					});
 				}
 				else if(argumentArray[0]==="search" && argumentArray.length===2){
-					var name = argumentArray[1].toUpperCase();
+					var name = argumentArray[1];
 					search(name,(res)=>{
 						displayResponse(socket,"Found result: ("+name+","+res+")");
 					}, ()=>{
