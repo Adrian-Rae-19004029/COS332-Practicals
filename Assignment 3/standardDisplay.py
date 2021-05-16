@@ -2,6 +2,7 @@
 import json
 
 output = [
+"Content-type:text/html\r\n\r\n",
 	"<!DOCTYPE html>",
 "<html>",
 "<head>",
@@ -41,7 +42,7 @@ output = [
 
 def changeOutput(displayString):
     #changes that one line of html in output
-    output[7] = "<tr colspan=4><input type='text' name='viewWindow'>"+displayString+"</tr>"
+    output[8] = "<tr colspan=4><input type='text' name='viewWindow'>"+displayString+"</tr>"
 
 
 def printOutput():
