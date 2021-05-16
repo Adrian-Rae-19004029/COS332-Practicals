@@ -1,5 +1,3 @@
-import json
-import random
 from standardDisplay import *
 
 def handleDigit(digit):
@@ -17,8 +15,8 @@ def handleDigit(digit):
     writeJSONToFile(stream)
     
     #display the stream
-    #stdDis.changeOutput(streamToString(stream))
-    #stdDis.printOutput()
+    changeOutput(streamToString(stream))
+    printOutput()
 
 
 
