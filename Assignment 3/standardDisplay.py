@@ -64,3 +64,9 @@ def streamToString(stream):
     except Exception as e:
     	return str(stream)
     
+def isANumber(num):
+    try:
+        n=float(num)
+        return True
+    except Exception as e:
+        return False

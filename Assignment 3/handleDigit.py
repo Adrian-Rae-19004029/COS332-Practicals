@@ -5,7 +5,7 @@ def handleDigit(digit):
     stream = getFileContents()
     currNumber = ""
     
-    if (len(stream)!=0 and stream[-1].isdigit()):
+    if (len(stream)!=0 and isANumber(stream[-1])):
         currNumber = stream[-1]
         currNumber+=str(digit)
         stream[-1] = currNumber      

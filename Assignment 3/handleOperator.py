@@ -9,7 +9,7 @@ def handleOperator(operator):
         changeOutput(result)
         printOutput()     
     else:
-        if (len(stream)!=0 and stream[-1].isdigit()):
+        if (len(stream)!=0 and isANumber(stream[-1])):
             #add operator to stream
             stream.append(operator)
             #error handling for badly placed operator     
