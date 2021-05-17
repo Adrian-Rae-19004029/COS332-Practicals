@@ -33,8 +33,10 @@ def processStream(stream):
             calcValue = 0;
             if(stream[i]=="*"):
                 calcValue = str(leftOp*rightOp)
-            if(stream[i]=="/" and stream[i+1]=="0"):
+            if(stream[i]=="/" and (rightOp==0.0)):
                 #then reset to original page
+                writeJSONToFile([])
+                return "Error"
             else:
                 calcValue = str(leftOp/rightOp)
             stream = stream[0:i-1]+[calcValue]+stream[i+2:]
