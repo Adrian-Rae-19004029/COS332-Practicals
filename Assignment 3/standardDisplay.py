@@ -36,7 +36,7 @@ output = [
             "<td><div><a href='add.py'> + </a></div></td>",
         "</tr>",
         "<tr>",
-            "<td><div rowspan=4><a href='clear.py'> 0 </a></div></td>",
+            "<td><div colspan=4><a href='clear.py'> Clear </a></div></td>",
         "</tr>",
     "</table>",
 "</body>",
