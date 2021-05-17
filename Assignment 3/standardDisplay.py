@@ -10,7 +10,7 @@ output = [
 "</head>",
 "<body>",
     "<table border=1>",
-        "<tr colspan=4><input type='text' name='viewWindow'></tr>",
+        "<th></th>",
         "<tr>",
             "<td><div><a href='digit7.py'> 7 </a></div></td>",
             "<td><div><a href='digit8.py'> 8 </a></div></td>",
@@ -45,7 +45,7 @@ output = [
 
 def changeOutput(displayString):
     #changes that one line of html in output
-    output[8] = "<tr colspan=4><input type='text' name='viewWindow'>"+displayString+"</tr>"
+    output[8] = "<th>"+displayString+"</th>"
 
 
 def printOutput():
