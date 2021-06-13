@@ -51,13 +51,12 @@ def retrieve_listing(inHost, inPort, inUser, inPassword):
 
 def delete_listing(index, inHost, inPort, inUser, inPassword):
     pop_client = poplib.POP3_SSL(inHost, str(inPort))
-    pop_client.user(inUser)
-    pop_client.pass_(inPassword)
-    delete_mail(index, pop_client)
-    pop_client.quit()
-    return True
+    try:
+        pop_client.user(inUser)
+        pop_client.pass_(inPassword)
+        delete_mail(index, pop_client)
+        pop_client.quit()
+        return True
+    except Exception as e:
+        return False
 
-
-print(retrieve_listing("pop.gmail.com", 995, "adrianraehome@gmail.com", "Bl@derunner6"))
-print(delete_listing(1, "pop.gmail.com", 995, "adrianraehome@gmail.com", "Bl@derunner6"))
-print(retrieve_listing("pop.gmail.com", 995, "adrianraehome@gmail.com", "Bl@derunner6"))
