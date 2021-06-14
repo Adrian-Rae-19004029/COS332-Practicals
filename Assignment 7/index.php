@@ -49,8 +49,8 @@ tr:nth-child(even) {
 	$index = 1;
 	foreach ($messages as $message) {
 		echo "<tr>";
-		echo "<td>".$message['Sender']."</td>";
-		echo "<td>".$message['Subject']."</td>";
+		echo "<td>".str_replace(array("<",">"), array("&lt","&gt"), $message['Sender']) ."</td>";
+		echo "<td>".str_replace(array("<",">"), array("&lt","&gt"),$message['Subject'])."</td>";
 		echo "<td>".$message['Size']."</td>";
 		echo "<td> <button onClick='deleteRow(".$index.")''> Delete Me </button> </td>";
 		echo "</tr>";
