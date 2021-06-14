@@ -1,4 +1,5 @@
 import poplib
+import sys
 
 
 def get_sender(index, pop_client):
@@ -60,3 +61,19 @@ def delete_listing(index, inHost, inPort, inUser, inPassword):
     except Exception as e:
         return False
 
+if sys.argv[1]=="0":
+    # Retrieving
+    host = sys.argv[2]
+    port = sys.argv[3]
+    user = sys.argv[4]
+    password = sys.argv[5]
+    print(retrieve_listing(host,port,user,password))
+
+elif sys.argv[1]=="1":
+    # Retrieving
+    index = int(sys.argv[2])
+    host = sys.argv[3]
+    port = sys.argv[4]
+    user = sys.argv[5]
+    password = sys.argv[6]
+    print(delete_listing(index,host,port,user,password))
