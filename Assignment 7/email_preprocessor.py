@@ -1,18 +1,20 @@
+#imports for the prac
 import poplib
 import sys
 
+#defining all the functions
+#------------------------------------------------------------------------------
 
+#Getters-----------------------------------------------------------------------
 def get_sender(index, pop_client):
     top_line = str(pop_client.top(index, 1))
     half_line = top_line[top_line.find("From:") + 6:]
     return half_line[:half_line.find("\'")]
 
-
 def get_subject(index, pop_client):
     top_line = str(pop_client.top(index, 1))
     half_line = top_line[top_line.find("Subject:") + 9:]
     return half_line[:half_line.find("\'")]
-
 
 def get_size(index, pop_client):
     top_line = str(pop_client.list(index))
@@ -20,12 +22,10 @@ def get_size(index, pop_client):
     half_line = top_line[top_line.find(" ") + 1:]
     return int(half_line[:half_line.find("\'")])
 
-
 def get_num_messages(pop_client):
     top_line = str(pop_client.list())
     half_line = top_line[top_line.find(" ") + 1:]
     return int(half_line[:half_line.find("messages") - 1])
-
 
 def get_email_table(pop_client):
     n = get_num_messages(pop_client)
@@ -36,10 +36,9 @@ def get_email_table(pop_client):
                       "Size": get_size(i, pop_client)})
     return table
 
-
+#delete and retrieve functions-------------------------------------------------
 def delete_mail(index, pop_client):
     pop_client.dele(index)
-
 
 def retrieve_listing(inHost, inPort, inUser, inPassword):
     pop_client = poplib.POP3_SSL(inHost, str(inPort))
@@ -48,7 +47,6 @@ def retrieve_listing(inHost, inPort, inUser, inPassword):
     table = get_email_table(pop_client)
     pop_client.quit()
     return table
-
 
 def delete_listing(index, inHost, inPort, inUser, inPassword):
     pop_client = poplib.POP3_SSL(inHost, str(inPort))
@@ -61,6 +59,11 @@ def delete_listing(index, inHost, inPort, inUser, inPassword):
     except Exception as e:
         return False
 
+
+#------------------------------------------------------------------------------
+
+
+#main program
 if sys.argv[1]=="0":
     # Retrieving
     host = sys.argv[2]
@@ -70,7 +73,7 @@ if sys.argv[1]=="0":
     print(retrieve_listing(host,port,user,password))
 
 elif sys.argv[1]=="1":
-    # Retrieving
+    # Deleting
     index = int(sys.argv[2])
     host = sys.argv[3]
     port = sys.argv[4]

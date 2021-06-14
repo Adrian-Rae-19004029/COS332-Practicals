@@ -1,10 +1,10 @@
-<?php 
+<?php
 	if(isset($_POST['deletionIndex'])){
 		$index= intval($_POST['deletionIndex']);
-		$options = array("INSTR"=>"DELE","PARA"=>array("INDEX"=>$index,"HOST"=>"pop.gmail.com","PORT"=>995, "USER"=>"adrianraehome@gmail.com","PASS"=>"Bl@derunner6")); 
+		$options = array("INSTR"=>"DELE","PARA"=>array("INDEX"=>$index,"HOST"=>"pop.gmail.com","PORT"=>995, "USER"=>"adrianraehome@gmail.com","PASS"=>"Bl@derunner6"));
 		$result = execute_preprocessor($options);
 		echo $result;
-		die();	
+		die();
 	}
 ?>
 
@@ -57,12 +57,11 @@ tr:nth-child(even) {
 		$index++;
 	}
   ?>
-  
 </table>
-
-
 </body>
 </html>
+
+
 <script type="text/javascript">
 	function deleteRow(index){
 		$.post("index.php", { deletionIndex: index}).done(function( data ) { alert((data)?("successfully deleted message "+index):("failed to delete message "+index)); location.reload();});
