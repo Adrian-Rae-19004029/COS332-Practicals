@@ -32,6 +32,44 @@ def login(c, t):
     conn.send(read_until_cooked(t).encode())
     t.write(str.encode(TARGET_PASS + "\r\n"))
 
+def handle_commands(c, t, command_array):
+
+    CONTINUE = True
+    for command in command_array:
+        KEYWORD = command.upper().split(" ")[0]
+    
+        # Process, but don't show output of restricted operations
+        if KEYWORD in RESTRICTED_KEYWORDS:
+            c.send(str.encode(
+                '[DENIED] The Proxy cannot deliver privileged information revealed by the {} command.\r\n'.format(
+                    KEYWORD)))
+            raw_line = str.encode(command + '\r\n')
+            t.write(raw_line)
+            t.read_until(raw_line)
+            response_to_message = read_until_cooked(t)
+            terminal_line = response_to_message.split("\r\n")[-1]
+            c.send(terminal_line[0:terminal_line.index(">") + 1].encode())
+    
+        # Close the channel on call for exit keyword
+        elif command.upper() in EXIT_KEYWORDS:
+            raw_line = str.encode("exit" + '\r\n')
+            t.write(raw_line)
+            t.read_until(raw_line)
+            c.send(t.read_all())
+            CONTINUE = False
+            break
+    
+        # Else, is a generic command
+        else:
+            raw_line = str.encode(command + '\r\n')
+            t.write(raw_line)
+            # IE - don't re-read the entered command
+            t.read_until(raw_line)
+            # But just the response
+            response_to_message = read_until_cooked(t)
+            c.send(response_to_message.encode())
+    return CONTINUE
+
 def get_client_text(conn):
     response = ""
     while True:
@@ -75,40 +113,11 @@ def handle_client_connection(conn, options):
             break
         # if the character is 'enter', parse the command in the buffer and send it through
         elif input_char == "\r\n":
-            command = "".join(input_buffer)
-            print("[{}][{}] Entered command: <{}>".format(CLIENT_HOST, CLIENT_PORT, command))
-            KEYWORD = command.upper().split(" ")[0]
+            commands = [s.strip() for s in "".join(input_buffer).split('&')]
 
-            # Process, but don't show output of restricted operations
-            if KEYWORD in RESTRICTED_KEYWORDS:
-                conn.send(str.encode(
-                    '[DENIED] The Proxy cannot deliver privileged information revealed by the {} command.\r\n'.format(
-                        KEYWORD)))
-                raw_line = str.encode(command + '\r\n')
-                TARGET.write(raw_line)
-                TARGET.read_until(raw_line)
-                response_to_message = read_until_cooked(TARGET)
-                terminal_line = response_to_message.split("\r\n")[-1]
-                conn.send(terminal_line[0:terminal_line.index(">") + 1].encode())
-
-            # Close the channel on call for exit keyword
-            elif command.upper() in EXIT_KEYWORDS:
-                raw_line = str.encode("exit" + '\r\n')
-                TARGET.write(raw_line)
-                TARGET.read_until(raw_line)
-                conn.send(TARGET.read_all())
+            print("[{}][{}] Entered commands: <{}>".format(CLIENT_HOST, CLIENT_PORT, commands))
+            if not handle_commands(conn, TARGET, commands):
                 break
-
-            # Else, is a generic command
-            else:
-                raw_line = str.encode(command + '\r\n')
-                TARGET.write(raw_line)
-                # IE - don't re-read the entered command
-                TARGET.read_until(raw_line)
-                # But just the response
-                response_to_message = read_until_cooked(TARGET)
-                conn.send(response_to_message.encode())
-
             # Clear buffer after command is sent
             input_buffer = []
 
