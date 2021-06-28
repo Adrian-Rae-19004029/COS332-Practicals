@@ -1,6 +1,8 @@
 import socket
+import sys
 from _thread import *
 import telnetlib
+import getpass
 
 PROXY_HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PROXY_PORT = 1066  # Port to listen on (non-privileged ports are > 1023)
@@ -9,67 +11,125 @@ SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 TARGET_HOST = 'localhost'
 TARGET_PORT = 23
 MAX_MESSAGE_SIZE = 65535
+RESTRICTED_KEYWORDS = ['PS', 'IPCONFIG', 'ARP']
+EXIT_KEYWORDS = ['QUIT', 'EXIT']
+
+TARGET_USER = "admin"
+TARGET_PASS = "admin"
+
 
 def read_until_cooked(conn):
     response = ""
+    while response == "":
+        data = conn.read_until(b"3a45e4ac-f4dd-40ff-b00e-6aec0d29944d", 0.01)
+        response += data.decode('ascii')
+    return response
+
+
+def login(c, t):
+    c.send(read_until_cooked(t).encode())
+    t.write(str.encode(TARGET_USER + "\r\n"))
+    conn.send(read_until_cooked(t).encode())
+    t.write(str.encode(TARGET_PASS + "\r\n"))
+
+def get_client_text(conn):
+    response = ""
     while True:
-        try:
-            data = conn.read_until(b"Non-Matching",1)
-            response += data.decode('ascii')
-            if data == b"":
-                break
-        except EOFError as e:
+        input_char = conn.recv(1024).decode("utf-8")
+        if input_char=="\r\n":
             break
+        response += input_char
     return response
 
 def handle_client_connection(conn, options):
+    # Create an input buffer
     input_buffer = []
-    print("connected to: " + options['host'] + ":" + options['port'])
-    conn.send(str.encode("[{}][{}] Welcome to the Proxy server:\r\n".format(options['host'], options['port'])))
 
+    # Get Client Details
+    CLIENT_HOST = options['host']
+    CLIENT_PORT = options['port']
+
+    conn.send(b"Please enter the target host: ")
+    TARGET_HOST = get_client_text(conn)
+    conn.send(b"Please enter the target port: ")
+    TARGET_PORT = int(get_client_text(conn))
+
+    print("New Client Connected: " + CLIENT_HOST + ":" + CLIENT_PORT)
+    conn.send(str.encode(
+        "[{}][{}] Awaiting tunnel to [{}][{}]...\r\n".format(CLIENT_HOST, CLIENT_PORT, TARGET_HOST, TARGET_PORT)))
+
+    # Create a telnet channel to the target - login
     TARGET = telnetlib.Telnet(TARGET_HOST, TARGET_PORT)
+    print("Auto-configuring Login... \r\n")
+    login(conn, TARGET)
+
+    # Get the header message
     conn.send(read_until_cooked(TARGET).encode())
 
-    TARGET.write(b"adrianraehome@gmail.com\r\n")
-    conn.send(read_until_cooked(TARGET).encode())
-
-    TARGET.write(b"Bl@derunner6\r\n")
-
-    conn.send(read_until_cooked(TARGET).encode())
+    # Character stream
     while True:
+        # Get a character
         data = conn.recv(1024)
         input_char = data.decode("utf-8")
         if not data:
             break
+        # if the character is 'enter', parse the command in the buffer and send it through
         elif input_char == "\r\n":
-            # GET COMMAND
             command = "".join(input_buffer)
-            # conn.send(str.encode("Your command was: {}\r\n".format(command)))
-            if ("PS " in command.upper()[:3]) or ("PS" in command.upper()[:3]):
-                conn.send(b'[DENIED] The Proxy cannot execute this command.\r\n')
-            elif command.upper() == "QUIT":
-                # SPECIAL TREATMENT OF QUITTING
-                break
-            else:
-                # HANDLE COMMANDS
-                # DO STUFF WITH TARGET HERE
-                raw_line = str.encode(command+'\r\n')
+            print("[{}][{}] Entered command: <{}>".format(CLIENT_HOST, CLIENT_PORT, command))
+            KEYWORD = command.upper().split(" ")[0]
+
+            # Process, but don't show output of restricted operations
+            if KEYWORD in RESTRICTED_KEYWORDS:
+                conn.send(str.encode(
+                    '[DENIED] The Proxy cannot deliver privileged information revealed by the {} command.\r\n'.format(
+                        KEYWORD)))
+                raw_line = str.encode(command + '\r\n')
                 TARGET.write(raw_line)
                 TARGET.read_until(raw_line)
                 response_to_message = read_until_cooked(TARGET)
+                terminal_line = response_to_message.split("\r\n")[-1]
+                conn.send(terminal_line[0:terminal_line.index(">") + 1].encode())
+
+            # Close the channel on call for exit keyword
+            elif command.upper() in EXIT_KEYWORDS:
+                raw_line = str.encode("exit" + '\r\n')
+                TARGET.write(raw_line)
+                TARGET.read_until(raw_line)
+                conn.send(TARGET.read_all())
+                break
+
+            # Else, is a generic command
+            else:
+                raw_line = str.encode(command + '\r\n')
+                TARGET.write(raw_line)
+                # IE - don't re-read the entered command
+                TARGET.read_until(raw_line)
+                # But just the response
+                response_to_message = read_until_cooked(TARGET)
                 conn.send(response_to_message.encode())
-                if response_to_message == "logout\r\n":
-                    break
-            # CLEAR INPUT BUFFER
+
+            # Clear buffer after command is sent
             input_buffer = []
-        else:
-            input_buffer.append(input_char)
+
+        # If there's no backspace, save the char to the input stream
+        elif input_char != '\x08':
+                input_buffer.append(input_char)
+
     TARGET.close()
+    conn.send(b"Your session with the target has been terminated.\r\n")
     conn.close()
-    print("disconnected from: " + options['host'] + ":" + options['port'])
+    print("Client Terminated Session: " + CLIENT_HOST + ":" + CLIENT_PORT)
 
 
 try:
+    PROXY_HOST = str(sys.argv[1])
+    PROXY_PORT = int(sys.argv[2])
+
+    TARGET_USER = str(input("Target Username: "))
+    TARGET_PASS = str(getpass.getpass(prompt="Target Password: "))
+
+    print("Starting PROXY on {}:{}".format(PROXY_HOST, PROXY_PORT))
     SOCKET.bind((PROXY_HOST, PROXY_PORT))
     SOCKET.listen()
     print("Waiting for a connection...")
@@ -79,8 +139,5 @@ try:
         start_new_thread(handle_client_connection, (conn, options,))
 except socket.error as e:
     print(str(e))
-except KeyboardInterrupt:
-    print("LOL, u dead")
-
-
-
+except IndexError as e:
+    sys.exit("No system arguments for host or port were given.")
